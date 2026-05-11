@@ -35,6 +35,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
     >
+      <head>
+        {/* Paystack Inline JS (test mode) */}
+        <script src="https://js.paystack.co/v1/inline.js" async></script>
+      </head>
       <body className="min-h-screen flex flex-col overflow-x-hidden">
         <CartProvider>
           {children}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { ShippingAddress } from "./ShippingForm";
 import {
   checkoutViaWhatsApp,
@@ -9,6 +10,7 @@ import {
   initiatePaystackPayment,
   formatPhoneForMpesa,
 } from "@/lib/checkout";
+import { saveOrder } from "@/lib/orders";
 
 interface CheckoutOptionsProps {
   amount: number;
@@ -17,16 +19,42 @@ interface CheckoutOptionsProps {
 
 export default function CheckoutOptions({ amount, address }: CheckoutOptionsProps) {
   const { items, clearCart } = useCart();
+  const { user } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showMpesaInput, setShowMpesaInput] = useState(false);
+  const [mpesaPhone, setMpesaPhone] = useState(address.phone || "");
+
+  // Save order to user's account in Firestore
+  const handleOrderSave = async (paymentMethod: string, reference: string, status: "pending" | "confirmed") => {
+    if (!user) return;
+    try {
+      await saveOrder({
+        userId: user.uid,
+        userEmail: user.email || "",
+        userName: user.displayName || "",
+        items,
+        totalAmount: amount,
+        shippingAddress: address,
+        paymentMethod,
+        paymentReference: reference,
+        status,
+      });
+    } catch (err) {
+      console.error("Failed to save order:", err);
+    }
+  };
 
   // WhatsApp Checkout
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     setLoading("whatsapp");
     setMessage(null);
     try {
       checkoutViaWhatsApp(items, amount, address);
+      const ref = `WA_${Date.now()}`;
+      await handleOrderSave("WhatsApp", ref, "pending");
       setMessage({ type: "success", text: "Order sent to WhatsApp! Complete the chat to confirm." });
+      clearCart();
     } catch {
       setMessage({ type: "error", text: "Failed to open WhatsApp. Try again." });
     }
@@ -35,21 +63,31 @@ export default function CheckoutOptions({ amount, address }: CheckoutOptionsProp
 
   // M-Pesa STK Push
   const handleMpesa = async () => {
+    if (!mpesaPhone.trim()) {
+      setMessage({ type: "error", text: "Please enter your M-Pesa phone number." });
+      return;
+    }
+
     setLoading("mpesa");
     setMessage(null);
-    const phone = formatPhoneForMpesa(address.phone);
+    const phone = formatPhoneForMpesa(mpesaPhone);
+    const accountRef = `RiotGear-${Date.now().toString().slice(-6)}`;
+
     const result = await initiateMpesaSTKPush({
       phone,
-      amount: amount,
-      accountRef: `RiotGear-${Date.now().toString().slice(-6)}`,
+      amount,
+      accountRef,
     });
+
     setMessage({
       type: result.success ? "success" : "error",
       text: result.message,
     });
-    if (result.success) {
-      // In production, you'd poll for payment confirmation
-      // For now just show success
+
+    if (result.success && result.checkoutRequestId) {
+      await handleOrderSave("M-Pesa", result.checkoutRequestId, "pending");
+      clearCart();
+      setShowMpesaInput(false);
     }
     setLoading(null);
   };
@@ -62,11 +100,12 @@ export default function CheckoutOptions({ amount, address }: CheckoutOptionsProp
       email: address.email,
       amount: amount,
       currency: "NGN",
-      onSuccess: (reference) => {
+      onSuccess: async (reference) => {
         setMessage({
           type: "success",
           text: `Payment successful! Ref: ${reference}`,
         });
+        await handleOrderSave("Paystack", reference, "confirmed");
         clearCart();
         setLoading(null);
       },
@@ -112,25 +151,70 @@ export default function CheckoutOptions({ amount, address }: CheckoutOptionsProp
         <span className="text-[10px] opacity-75">Direct to Seller</span>
       </button>
 
-      {/* M-Pesa */}
-      <button
-        onClick={handleMpesa}
-        disabled={loading !== null}
-        className="bg-[#49B642] text-white p-3 font-bold flex justify-between items-center hover:bg-[#3da636] transition-colors disabled:opacity-50 text-sm"
-      >
-        <span className="flex items-center gap-2">
-          {loading === "mpesa" ? (
-            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          ) : (
+      {/* M-Pesa Section */}
+      {!showMpesaInput ? (
+        <button
+          onClick={() => setShowMpesaInput(true)}
+          disabled={loading !== null}
+          className="bg-[#49B642] text-white p-3 font-bold flex justify-between items-center hover:bg-[#3da636] transition-colors disabled:opacity-50 text-sm"
+        >
+          <span className="flex items-center gap-2">
             <span className="font-black text-lg">M</span>
-          )}
-          PAY VIA M-PESA
-        </span>
-        <span className="text-[10px] opacity-75">Kenya/Tanzania</span>
-      </button>
+            PAY VIA M-PESA
+          </span>
+          <span className="text-[10px] opacity-75">Kenya/Tanzania</span>
+        </button>
+      ) : (
+        <div className="border-2 border-[#49B642] rounded-sm p-4 bg-[#49B642]/5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="bg-[#49B642] text-white font-black text-sm w-7 h-7 flex items-center justify-center rounded-full">M</span>
+            <div>
+              <p className="text-xs font-bold text-[#49B642] uppercase">M-Pesa Payment</p>
+              <p className="text-[10px] text-gray-500">Amount: <span className="font-bold text-[var(--color-charcoal)]">${amount.toFixed(2)}</span></p>
+            </div>
+          </div>
+
+          {/* Phone Input */}
+          <div className="mb-3">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+              M-Pesa Phone Number
+            </label>
+            <input
+              type="tel"
+              value={mpesaPhone}
+              onChange={(e) => setMpesaPhone(e.target.value)}
+              placeholder="e.g. 0712345678 or +254712345678"
+              className="w-full border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:border-[#49B642] transition-colors"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">
+              An STK push of <span className="font-bold">${amount.toFixed(2)}</span> will be sent to this number
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowMpesaInput(false)}
+              className="flex-1 border border-gray-300 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleMpesa}
+              disabled={loading === "mpesa" || !mpesaPhone.trim()}
+              className="flex-1 bg-[#49B642] text-white py-2.5 text-xs font-bold uppercase tracking-wider hover:bg-[#3da636] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading === "mpesa" ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : null}
+              {loading === "mpesa" ? "Sending..." : "Pay Now"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Paystack */}
       <button
@@ -158,6 +242,12 @@ export default function CheckoutOptions({ amount, address }: CheckoutOptionsProp
       <p className="text-[10px] text-gray-500 text-center mt-1">
         Shipping to: {address.city}, {address.country} — {address.fullName}
       </p>
+
+      {!user && (
+        <p className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 p-2 rounded text-center mt-1">
+          Sign in to save order history to your account
+        </p>
+      )}
     </div>
   );
 }

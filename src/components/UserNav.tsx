@@ -1,23 +1,23 @@
 "use client";
 
-// In a real app, this would use useSession() from next-auth/react
-// For now we simulate the logic with a mock session
-const mockSession = {
-  user: {
-    name: "Riot User",
-    image: null as string | null, // Set to null to show initial fallback
-  },
-};
+// In a real app, use useSession() from next-auth/react
+// For demo, we simulate no session (not logged in)
+const mockSession = null as { user: { name: string; image: string | null } } | null;
 
 export default function UserNav() {
-  const session = mockSession; // Replace with: const { data: session } = useSession();
+  const session = mockSession;
 
   if (!session?.user) {
     return (
-      <a href="/api/auth/signin" className="p-2" aria-label="Sign In">
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <a
+        href="/auth/signin"
+        className="p-1 sm:p-2 flex items-center gap-1"
+        aria-label="Sign In"
+      >
+        <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
+        <span className="hidden sm:inline text-xs font-bold uppercase">Sign In</span>
       </a>
     );
   }
@@ -30,10 +30,10 @@ export default function UserNav() {
         <img
           src={session.user.image}
           alt={session.user.name || "User"}
-          className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-gray-200"
         />
       ) : (
-        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold text-sm">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs sm:text-sm">
           {userInitial}
         </div>
       )}

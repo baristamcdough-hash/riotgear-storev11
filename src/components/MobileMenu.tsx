@@ -21,7 +21,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="lg:hidden fixed inset-0 top-[108px] z-40 bg-white overflow-y-auto">
+    <div className="lg:hidden fixed inset-x-0 top-[88px] bottom-0 z-40 bg-white overflow-y-auto overscroll-contain">
       {/* Search (mobile) */}
       <div className="p-4 border-b">
         <input
@@ -58,7 +58,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                     <li key={sub}>
                       <a
                         href="#"
-                        className="text-sm text-gray-600 hover:text-red-600"
+                        className="block py-1 text-sm text-gray-600 hover:text-red-600 active:text-red-700"
                         onClick={onClose}
                       >
                         {sub}
@@ -71,6 +71,17 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           ))}
         </ul>
       </nav>
+
+      {/* Sign In Link */}
+      <div className="p-4 border-t">
+        <a
+          href="/auth/signin"
+          className="block w-full bg-black text-white text-center py-3 font-bold uppercase tracking-wider text-sm"
+          onClick={onClose}
+        >
+          Sign In / Create Account
+        </a>
+      </div>
     </div>
   );
 }

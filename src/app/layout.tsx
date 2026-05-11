@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Oswald } from "next/font/google";
+import { CartProvider } from "@/context/CartContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,9 +33,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col overflow-x-hidden">
+        <CartProvider>
+          {children}
+        </CartProvider>
+      </body>
     </html>
   );
 }

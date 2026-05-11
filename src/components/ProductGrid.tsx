@@ -1,3 +1,5 @@
+"use client";
+
 import ProductCard, { Product } from "./ProductCard";
 
 const products: Product[] = [
@@ -68,16 +70,16 @@ const products: Product[] = [
 
 export default function ProductGrid() {
   return (
-    <section className="max-w-7xl mx-auto px-4 py-12">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="font-[var(--font-oswald)] text-2xl md:text-3xl font-bold uppercase">
+    <section className="w-full max-w-7xl mx-auto px-4 py-8 sm:py-12">
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
+        <h2 className="font-[var(--font-oswald)] text-xl sm:text-2xl md:text-3xl font-bold uppercase">
           Trending Now
         </h2>
-        <a href="#" className="text-sm font-bold text-red-600 hover:underline uppercase">
+        <a href="#" className="text-xs sm:text-sm font-bold text-red-600 hover:underline uppercase">
           View All
         </a>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

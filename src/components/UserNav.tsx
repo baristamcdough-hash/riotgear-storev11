@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 // In a real app, use useSession() from next-auth/react
 // For demo, we simulate no session (not logged in)
 const mockSession = null as { user: { name: string; image: string | null } } | null;
@@ -9,7 +11,7 @@ export default function UserNav() {
 
   if (!session?.user) {
     return (
-      <a
+      <Link
         href="/auth/signin"
         className="p-1 sm:p-2 flex items-center gap-1"
         aria-label="Sign In"
@@ -18,14 +20,14 @@ export default function UserNav() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
         <span className="hidden sm:inline text-xs font-bold uppercase">Sign In</span>
-      </a>
+      </Link>
     );
   }
 
   const userInitial = session.user.name?.charAt(0).toUpperCase() || "U";
 
   return (
-    <div className="flex items-center gap-2">
+    <Link href="/auth/signin" className="flex items-center gap-2">
       {session.user.image ? (
         <img
           src={session.user.image}
@@ -37,6 +39,6 @@ export default function UserNav() {
           {userInitial}
         </div>
       )}
-    </div>
+    </Link>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import PromoBar from "./PromoBar";
 import MegaMenu from "./MegaMenu";
 import MobileMenu from "./MobileMenu";
@@ -50,11 +51,11 @@ export default function Header() {
 
           {/* Logo */}
           <div className="flex-1 text-center lg:flex-none">
-            <a href="/">
+            <Link href="/">
               <h1 className="font-[var(--font-oswald)] text-xl sm:text-2xl md:text-3xl font-bold tracking-tight uppercase whitespace-nowrap">
                 RIOT<span className="text-red-600">GEAR</span>
               </h1>
-            </a>
+            </Link>
           </div>
 
           {/* User & Cart Icons */}

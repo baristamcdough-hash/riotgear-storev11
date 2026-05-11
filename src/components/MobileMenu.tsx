@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 const categories = [
   { name: "Men", subcategories: ["Jerseys", "Shorts", "Training Kits", "Jackets", "Accessories"] },
@@ -74,13 +75,13 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
       {/* Sign In Link */}
       <div className="p-4 border-t">
-        <a
+        <Link
           href="/auth/signin"
           className="block w-full bg-black text-white text-center py-3 font-bold uppercase tracking-wider text-sm"
           onClick={onClose}
         >
           Sign In / Create Account
-        </a>
+        </Link>
       </div>
     </div>
   );

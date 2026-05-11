@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function SignInPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -18,11 +19,11 @@ export default function SignInPage() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <div className="bg-black text-white py-4 text-center">
-        <a href="/">
+        <Link href="/">
           <h1 className="font-[var(--font-oswald)] text-2xl font-bold tracking-tight uppercase">
             RIOT<span className="text-red-600">GEAR</span>
           </h1>
-        </a>
+        </Link>
       </div>
 
       {/* Form */}

@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBDoSW2G988d1_awBQ0XDKztotIw-h30DE",
+  apiKey: "AIzaSyBDoSW2G988dl_awBQ0XDKztotIw-h30DE",
   authDomain: "poriot-gear-storefront.firebaseapp.com",
   projectId: "poriot-gear-storefront",
   storageBucket: "poriot-gear-storefront.firebasestorage.app",

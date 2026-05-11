@@ -16,9 +16,9 @@ import { ADMIN_CREDS_KEY, DEFAULT_ADMIN_EMAIL, getAdminCreds } from "@/component
 //    To: {{to_email}}
 // 4. Get your PUBLIC_KEY from Account → API Keys
 // 5. Replace the values below:
-const EMAILJS_SERVICE_ID = "service_riotgear";    // Replace with your EmailJS service ID
-const EMAILJS_TEMPLATE_ID = "template_otp";       // Replace with your EmailJS template ID
-const EMAILJS_PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY"; // Replace with your EmailJS public key
+const EMAILJS_SERVICE_ID = "service_ud4q3th";
+const EMAILJS_TEMPLATE_ID = "template_7xizeyl";
+const EMAILJS_PUBLIC_KEY = "lR0od57Crthfh4V1a";
 
 export default function AdminSettingsPage() {
   const creds = getAdminCreds();

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import AdminLogin from "@/components/AdminLogin";
+
+const ADMIN_STORAGE_KEY = "riotgear_admin_auth";
 
 const navItems = [
   { href: "/admin/", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -16,8 +18,35 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [checking, setChecking] = useState(true);
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(ADMIN_STORAGE_KEY);
+    if (stored === "true") {
+      setIsAuthenticated(true);
+    }
+    setChecking(false);
+  }, []);
+
+  const handleLogin = () => {
+    sessionStorage.setItem(ADMIN_STORAGE_KEY, "true");
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem(ADMIN_STORAGE_KEY);
+    setIsAuthenticated(false);
+  };
+
+  if (checking) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="animate-pulse text-gray-400 text-sm">Loading...</div></div>;
+  }
+
+  if (!isAuthenticated) {
+    return <AdminLogin onSuccess={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -44,15 +73,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             Back to Store
           </Link>
-          {user && (
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[var(--color-gold)] flex items-center justify-center text-xs font-bold text-white">{user.displayName?.charAt(0) || "A"}</div>
-              <div className="flex-1 min-w-0"><p className="text-xs font-medium text-white truncate">{user.displayName || "Admin"}</p></div>
-              <button onClick={signOut} className="text-gray-400 hover:text-[var(--color-accent)] p-1" title="Sign Out">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-[var(--color-gold)] flex items-center justify-center text-xs font-bold text-white">A</div>
+            <div className="flex-1 min-w-0"><p className="text-xs font-medium text-white truncate">Admin</p><p className="text-[10px] text-gray-400 truncate">wildpharmtech9@gmail.com</p></div>
+            <button onClick={handleLogout} className="text-gray-400 hover:text-[var(--color-accent)] p-1" title="Logout">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            </button>
+          </div>
         </div>
       </aside>
       <div className="flex-1 flex flex-col min-w-0">
@@ -62,6 +89,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <span className="text-xs text-gray-500 hidden sm:block">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" })}</span>
         </header>
         <main className="flex-1 p-4 sm:p-6 overflow-auto">{children}</main>
+        <footer className="border-t border-gray-200 px-6 py-4 text-center bg-white">
+          <p className="text-[10px] text-gray-400">RiotGear Admin v1.0 — Built by <span className="font-bold text-[var(--color-charcoal)]">P.o.Riot🍄</span> | Powered by <span className="text-[var(--color-gold)] font-bold">WildPharmTech</span></p>
+        </footer>
       </div>
     </div>
   );

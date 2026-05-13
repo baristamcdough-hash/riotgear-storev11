@@ -6,6 +6,8 @@ export interface Product {
   price: number;
   originalPrice?: number;
   images: string[];
+  backImage?: string;
+  modelUrl?: string;
   badge?: "Best Seller" | "New Arrival";
   description: string;
   details: string[];

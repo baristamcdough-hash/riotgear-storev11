@@ -1,18 +1,30 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { products as initialProducts, Product } from "@/lib/products";
 
 export default function ProductsPage() {
   const [list, setList] = useState<Product[]>(initialProducts);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", team: "", price: "", originalPrice: "", category: "", description: "", badge: "", image: "", sizes: "S,M,L,XL,XXL" });
+  const [form, setForm] = useState({ name: "", team: "", price: "", originalPrice: "", category: "", description: "", badge: "", image: "", backImage: "", modelUrl: "", sizes: "S,M,L,XL,XXL" });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const backFileInputRef = useRef<HTMLInputElement>(null);
 
-  const openNew = () => { setForm({ name: "", team: "", price: "", originalPrice: "", category: "", description: "", badge: "", image: "", sizes: "S,M,L,XL,XXL" }); setEditing(null); setShowForm(true); };
-  const openEdit = (p: Product) => { setForm({ name: p.name, team: p.team, price: String(p.price), originalPrice: String(p.originalPrice||""), category: p.category, description: p.description, badge: p.badge||"", image: p.images[0], sizes: p.sizes.join(",") }); setEditing(p); setShowForm(true); };
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, field: "image" | "backImage") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm(prev => ({ ...prev, [field]: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const openNew = () => { setForm({ name: "", team: "", price: "", originalPrice: "", category: "", description: "", badge: "", image: "", backImage: "", modelUrl: "", sizes: "S,M,L,XL,XXL" }); setEditing(null); setShowForm(true); };
+  const openEdit = (p: Product) => { setForm({ name: p.name, team: p.team, price: String(p.price), originalPrice: String(p.originalPrice||""), category: p.category, description: p.description, badge: p.badge||"", image: p.images[0], backImage: p.backImage||"", modelUrl: p.modelUrl||"", sizes: p.sizes.join(",") }); setEditing(p); setShowForm(true); };
 
   const handleSave = () => {
-    const np: Product = { id: editing?.id||Date.now(), slug: editing?.slug||form.name.toLowerCase().replace(/[^a-z0-9]+/g,"-"), name: form.name, team: form.team, price: parseFloat(form.price)||0, originalPrice: form.originalPrice?parseFloat(form.originalPrice):undefined, images: [form.image||"https://placehold.co/400x500/333/fff?text=Product"], badge: (form.badge as any)||undefined, description: form.description, details: ["Premium quality","Official merchandise"], sizes: form.sizes.split(",").map(s=>s.trim()), category: form.category };
+    const np: Product = { id: editing?.id||Date.now(), slug: editing?.slug||form.name.toLowerCase().replace(/[^a-z0-9]+/g,"-"), name: form.name, team: form.team, price: parseFloat(form.price)||0, originalPrice: form.originalPrice?parseFloat(form.originalPrice):undefined, images: [form.image||"https://placehold.co/400x500/333/fff?text=Product"], backImage: form.backImage||undefined, modelUrl: form.modelUrl||undefined, badge: (form.badge as any)||undefined, description: form.description, details: ["Premium quality","Official merchandise"], sizes: form.sizes.split(",").map(s=>s.trim()), category: form.category };
     if (editing) { setList(p=>p.map(x=>x.id===editing.id?np:x)); } else { setList(p=>[...p,np]); }
     setShowForm(false);
   };
@@ -31,7 +43,29 @@ export default function ProductsPage() {
               <input placeholder="Product Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full border px-3 py-2 text-sm" />
               <div className="grid grid-cols-2 gap-3"><input placeholder="Team *" value={form.team} onChange={e=>setForm({...form,team:e.target.value})} className="w-full border px-3 py-2 text-sm" /><input placeholder="Category" value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full border px-3 py-2 text-sm" /></div>
               <div className="grid grid-cols-2 gap-3"><input placeholder="Price *" type="number" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} className="w-full border px-3 py-2 text-sm" /><input placeholder="Original Price" type="number" value={form.originalPrice} onChange={e=>setForm({...form,originalPrice:e.target.value})} className="w-full border px-3 py-2 text-sm" /></div>
-              <input placeholder="Image URL" value={form.image} onChange={e=>setForm({...form,image:e.target.value})} className="w-full border px-3 py-2 text-sm" />
+              {/* Image Upload */}
+              <div className="border-2 border-dashed border-gray-200 rounded p-3">
+                <p className="text-[10px] font-bold uppercase text-gray-500 mb-2">Front Image</p>
+                <div className="flex gap-2">
+                  <input placeholder="Image URL" value={form.image} onChange={e=>setForm({...form,image:e.target.value})} className="flex-1 border px-3 py-2 text-sm" />
+                  <input type="file" ref={fileInputRef} accept="image/*" onChange={(e) => handleFileUpload(e, "image")} className="hidden" />
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="px-3 py-2 bg-[var(--color-charcoal)] text-white text-[10px] font-bold uppercase whitespace-nowrap">Upload</button>
+                </div>
+                {form.image && <img src={form.image} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded border" />}
+              </div>
+              <div className="border-2 border-dashed border-gray-200 rounded p-3">
+                <p className="text-[10px] font-bold uppercase text-gray-500 mb-2">Back Image (for 3D flip)</p>
+                <div className="flex gap-2">
+                  <input placeholder="Back image URL" value={form.backImage} onChange={e=>setForm({...form,backImage:e.target.value})} className="flex-1 border px-3 py-2 text-sm" />
+                  <input type="file" ref={backFileInputRef} accept="image/*" onChange={(e) => handleFileUpload(e, "backImage")} className="hidden" />
+                  <button type="button" onClick={() => backFileInputRef.current?.click()} className="px-3 py-2 bg-[var(--color-charcoal)] text-white text-[10px] font-bold uppercase whitespace-nowrap">Upload</button>
+                </div>
+                {form.backImage && <img src={form.backImage} alt="Back Preview" className="mt-2 w-20 h-20 object-cover rounded border" />}
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase text-gray-500 mb-1">3D Model URL (.glb)</p>
+                <input placeholder="https://...model.glb (optional)" value={form.modelUrl} onChange={e=>setForm({...form,modelUrl:e.target.value})} className="w-full border px-3 py-2 text-sm" />
+              </div>
               <input placeholder="Sizes (S,M,L,XL)" value={form.sizes} onChange={e=>setForm({...form,sizes:e.target.value})} className="w-full border px-3 py-2 text-sm" />
               <select value={form.badge} onChange={e=>setForm({...form,badge:e.target.value})} className="w-full border px-3 py-2 text-sm"><option value="">No Badge</option><option value="Best Seller">Best Seller</option><option value="New Arrival">New Arrival</option></select>
               <textarea placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={3} className="w-full border px-3 py-2 text-sm" />

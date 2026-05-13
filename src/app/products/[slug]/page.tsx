@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getProductBySlug, products } from "@/lib/products";
 import { useCart } from "@/context/CartContext";
+import { ProductCardFlip, ProductSpinViewer, Product3DModel } from "@/components/Product3DViewer";
+
+type ViewMode = "gallery" | "flip" | "spin" | "3d";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -15,6 +18,7 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("gallery");
 
   if (!product) {
     return (
@@ -68,31 +72,43 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Images */}
           <div className="space-y-4">
-            {/* Main Image */}
-            <div className="bg-white border border-gray-100 overflow-hidden aspect-[4/5]">
-              <img
-                src={product.images[activeImage]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+            {/* View Mode Tabs */}
+            <div className="flex gap-1 bg-gray-100 p-1 rounded">
+              {(["gallery", "flip", "spin", "3d"] as ViewMode[]).map((mode) => (
+                <button key={mode} onClick={() => setViewMode(mode)} className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded transition-colors ${viewMode === mode ? "bg-white text-[var(--color-charcoal)] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+                  {mode === "gallery" ? "Gallery" : mode === "flip" ? "3D Flip" : mode === "spin" ? "360°" : "3D Model"}
+                </button>
+              ))}
             </div>
-            {/* Thumbnails */}
-            {product.images.length > 1 && (
-              <div className="flex gap-3">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={`w-20 h-20 border-2 overflow-hidden transition-all ${
-                      activeImage === i
-                        ? "border-[var(--color-gold)]"
-                        : "border-gray-200 hover:border-gray-400"
-                    }`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
+
+            {/* View Content */}
+            {viewMode === "gallery" && (
+              <>
+                <div className="bg-white border border-gray-100 overflow-hidden aspect-[4/5]">
+                  <img src={product.images[activeImage]} alt={product.name} className="w-full h-full object-cover" />
+                </div>
+                {product.images.length > 1 && (
+                  <div className="flex gap-3">
+                    {product.images.map((img, i) => (
+                      <button key={i} onClick={() => setActiveImage(i)} className={`w-20 h-20 border-2 overflow-hidden transition-all ${activeImage === i ? "border-[var(--color-gold)]" : "border-gray-200 hover:border-gray-400"}`}>
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {viewMode === "flip" && (
+              <ProductCardFlip frontImage={product.images[0]} backImage={product.backImage || product.images[1]} name={product.name} />
+            )}
+
+            {viewMode === "spin" && (
+              <ProductSpinViewer images={product.images} name={product.name} />
+            )}
+
+            {viewMode === "3d" && (
+              <Product3DModel modelUrl={product.modelUrl} fallbackImage={product.images[0]} name={product.name} />
             )}
           </div>
 

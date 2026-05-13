@@ -30,9 +30,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setChecking(false);
   }, []);
 
-  const handleLogin = () => {
+  const [role, setRole] = useState<"owner" | "demo">("owner");
+
+  const handleLogin = (loginRole: "owner" | "demo" = "owner") => {
     sessionStorage.setItem(ADMIN_STORAGE_KEY, "true");
     setIsAuthenticated(true);
+    setRole(loginRole);
   };
 
   const handleLogout = () => {
@@ -48,6 +51,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <AdminLogin onSuccess={handleLogin} />;
   }
 
+  const restrictedPaths = ["/admin/settings", "/admin/integrations"];
+  const isRestricted = role === "demo" && restrictedPaths.some(p => pathname?.startsWith(p));
+
+  const visibleNavItems = role === "demo" ? navItems.filter(i => !restrictedPaths.some(p => i.href.startsWith(p))) : navItems;
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
@@ -58,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
         </div>
         <nav className="p-4 space-y-1">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive = pathname === item.href || pathname === item.href.slice(0, -1);
             return (
               <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors ${isActive ? "bg-[var(--color-accent)] text-white" : "text-gray-300 hover:bg-white/10 hover:text-white"}`}>
@@ -88,7 +96,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex-1" />
           <span className="text-xs text-gray-500 hidden sm:block">{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" })}</span>
         </header>
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+          {role === "demo" && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded flex items-center gap-2">
+              <span className="text-blue-600 text-xs font-bold px-2 py-0.5 bg-blue-100 rounded uppercase">Demo Mode</span>
+              <p className="text-[11px] text-blue-700">View-only access. Settings & Integrations are locked.</p>
+            </div>
+          )}
+          {isRestricted ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <svg className="w-16 h-16 text-gray-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+              <h2 className="text-lg font-bold text-gray-600 mb-1">Access Restricted</h2>
+              <p className="text-xs text-gray-400">This section is locked in Demo Mode. Contact the owner for full access.</p>
+            </div>
+          ) : children}
+        </main>
         <footer className="border-t border-gray-200 px-6 py-4 text-center bg-white">
           <p className="text-[10px] text-gray-400">RiotGear Admin v1.0 — Built by <span className="font-bold text-[var(--color-charcoal)]">P.o.Riot🍄</span> | Powered by <span className="text-[var(--color-gold)] font-bold">WildPharmTech</span></p>
         </footer>
